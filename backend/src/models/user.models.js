@@ -1,7 +1,7 @@
-import mongoose, {Schema} from "mongoose";
+    import mongoose, {Schema} from "mongoose";
 import { Video } from "./video.models.js";
 import bcrypt from "bcrypt";
-import jwt from "json-web-token";
+import jwt from "jsonwebtoken";
 
 const userSchema = new mongoose.Schema({
     username:{
@@ -46,7 +46,7 @@ const userSchema = new mongoose.Schema({
 
 userSchema.pre("save", async function(next){
     if(!this.isModified("password")) return next();
-  this.password = bcrypt.hash(this.password, 10);
+  this.password = await bcrypt.hash(this.password, 10);
   next();
 })
 
@@ -55,7 +55,8 @@ userSchema.methods.isPasswordCorrect = async function(password){
 }
 
 userSchema.methods.generateAccessToken = function(){
-   return jwt.sign({
+   return jwt.sign(
+    {
         _id: this._id,
         username: this.username,
         email: this.email,
@@ -63,7 +64,7 @@ userSchema.methods.generateAccessToken = function(){
     },
     process.env.ACCESS_TOKEN_SECRET,
     {
-        expireIn: process.env.ACCESS_TOKEN_EXPIRY,
+        expiresIn: process.env.ACCESS_TOKEN_EXPIRY,
     }
     )
 }
@@ -74,7 +75,7 @@ userSchema.methods.generateRefreshToken = function(){
 },
 process.env.REFRESH_TOKEN_SECRET,
 {
-    expireIn: process.env.REFRESH_TOKEN_EXPIRY,
+    expiresIn: process.env.REFRESH_TOKEN_EXPIRY,
 }
     )
 }
