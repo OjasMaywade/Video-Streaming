@@ -112,15 +112,50 @@ const logoutUser = asyncHandler(async(req,res)=>{
         secure: true
     }
     res
-    .clearCookie("accessToken", accessToken, options)
-    .clearCookie("refreshToken", refreshToken, options)
+    .clearCookie("accessToken",options)
+    .clearCookie("refreshToken",options)
     .json( new ApiResponse(200,
         "User loggedout")
-         )
+        )
 
 })
 
-export {registerUser, loginUser, logoutUser}
+const refreshAccessToken = asyncHandler(async(req,res)=>{
+    const {refreshToken} = req.cookies;
+
+    if(!refreshToken) throw new ApiError(400, "token not provided")
+
+    const decoderefreshToken = jwt.verify(refreshToken, process.env.REFRESH_TOKEN_SECRET, (err, decoded)=>{
+        if(err) throw new ApiError(400, "Token Invalid")
+            else return decoded;
+    })
+
+    const user = await User.findById(decoderefreshToken._id)
+    if(!user) throw new ApiError(400, "User ot available");
+
+    if(refreshToken !== user.refreshToken) throw new ApiError(400, "RefreshToken doesn't match with the DB");
+
+    const options={
+        httpOnly: true,
+        secure: true
+    }
+    const accessToken = user.generateAccessToken();
+
+    res
+    .cookie("accessToken", accessToken, options)
+    .cookie("refreshToken", refreshToken, options)
+    .json(
+        new ApiResponse(
+            200,
+            {},
+            "Access Token Re-geneareted"
+        )
+    )
+
+})
+
+
+export {registerUser, loginUser, logoutUser, refreshAccessToken}
 
 
 
@@ -146,4 +181,13 @@ export {registerUser, loginUser, logoutUser}
 /* 
 1. For loggin out a user we need to first verify the user that it has authorization to logout
 2. For logging out a user we need to delete the cookies, Access and refresh token from db
+*/
+
+//Refresh Access token
+/* 
+1. Need to create a contoller and route to Generate new access token using refresh token after access token is expired
+2. Here we will take refreshToken from user verify it using jwt.verify
+3. Next we will verify the token stored in the db
+4. generate new access token 
+5. send response to user
 */
