@@ -1,4 +1,4 @@
-    import mongoose, {Schema} from "mongoose";
+import mongoose, {Schema} from "mongoose";
 import { Video } from "./video.models.js";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
@@ -40,7 +40,7 @@ const userSchema = new mongoose.Schema({
         ref: Video
     }],
     refreshToken:{
-        
+        type: String
     }
 }, {timestamps: true})
 

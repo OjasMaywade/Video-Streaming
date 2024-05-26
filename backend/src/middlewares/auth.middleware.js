@@ -1,11 +1,11 @@
-import jwt from "json-web-token";
-import asyncHandler from "../utils/asycnHandler.js";
+import jwt from "jsonwebtoken";
+import {asyncHandler} from "../utils/asycnHandler.js";
 import { ApiError } from "../utils/ApiError.js";
-import User from "../models/user.models.js"
+import {User} from "../models/user.models.js"
 
-export const verifyJWT = asyncHandler(async(req,res, next)=>{
- const token =  req.cookie.accessToken || req.headers.authorization.accessToken ;
- 
+export const verifyJWT = asyncHandler(async(req,_, next)=>{
+ const token =  req.cookies?.accessToken || req.headers.authorization.accessToken ;
+
  if(!token){
     throw new ApiError(400, "unAuthorized Request")
  }
@@ -18,9 +18,8 @@ export const verifyJWT = asyncHandler(async(req,res, next)=>{
   const user = await User.findById(decodeToken._id);
 
   if(!user) throw new ApiError(404, "User not available in DB, please signup");
-
-  res.user = user;
-
+  
+  req.user = user;
   next();
 
 })

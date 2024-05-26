@@ -8,25 +8,14 @@ import jwt from "jsonwebtoken";
 
 
 const generateAccessTokenAndRefreshToken = async(userinfo)=>{
-    //console.log(user)
-     const accessToken = userinfo.generateAccessToken(userinfo._id);
-     const refreshToken = userinfo.generateRefreshToken(userinfo._id);
+     const accessToken = userinfo.generateAccessToken();
+     const refreshToken = userinfo.generateRefreshToken();
+
+     userinfo.refreshToken = refreshToken;
+     userinfo.save();
 
      return {accessToken, refreshToken};
 }
-// const generateAccessAndRefereshTokens = async(userId) =>{
-    
-//         const user = await User.findById(userId)
-//         const accessToken = user.generateAccessToken()
-//         const refreshToken = user.generateRefreshToken()
-
-//         user.refreshToken = refreshToken
-//         await user.save({ validateBeforeSave: false })
-
-//         return {accessToken, refreshToken}
-
-// }
-
 
 const registerUser = asyncHandler( async(req,res)=>{
     let {username, password, email, fullName} = req.body;
@@ -91,6 +80,8 @@ const loginUser = asyncHandler(async(req,res)=>{
  if(!validPassword) throw new ApiError(401, "Incorrect Credentials please check the password");
 
  const {accessToken, refreshToken}= await generateAccessTokenAndRefreshToken(user);
+
+ const loggedIn = await User.findById(user._id).select("-password -refreshToken");
  
  const options = {
   httpOnly: true,
@@ -103,14 +94,33 @@ const loginUser = asyncHandler(async(req,res)=>{
  .cookie("refreshToken", refreshToken, options)
  .json(
     new ApiResponse( 200,
-        {},
+        {loggedIn},
         "User loggedin Successfully"
     )
  )
 
 })
 
-export {registerUser, loginUser}
+const logoutUser = asyncHandler(async(req,res)=>{
+  const {accessToken, refreshToken} = req.cookies || req.headers;
+    const userinfo= req.user;
+
+    await User.findByIdAndUpdate(userinfo._id, {refreshToken: ""})
+
+    const options= {
+        httpOnly: true,
+        secure: true
+    }
+    res
+    .clearCookie("accessToken", accessToken, options)
+    .clearCookie("refreshToken", refreshToken, options)
+    .json( new ApiResponse(200,
+        "User loggedout")
+         )
+
+})
+
+export {registerUser, loginUser, logoutUser}
 
 
 
@@ -130,4 +140,10 @@ export {registerUser, loginUser}
 4. after getting the User details from db generate Access and refresh token 
 5. send this token through cookies back to user with message user logged-in 
 
+*/
+
+//Logout User
+/* 
+1. For loggin out a user we need to first verify the user that it has authorization to logout
+2. For logging out a user we need to delete the cookies, Access and refresh token from db
 */
