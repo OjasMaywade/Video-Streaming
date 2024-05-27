@@ -140,7 +140,7 @@ const refreshAccessToken = asyncHandler(async(req,res)=>{
         secure: true
     }
     const accessToken = user.generateAccessToken();
-
+    console.log(accessToken)
     res
     .cookie("accessToken", accessToken, options)
     .cookie("refreshToken", refreshToken, options)
@@ -154,8 +154,27 @@ const refreshAccessToken = asyncHandler(async(req,res)=>{
 
 })
 
+const resetCurrentPassword = asyncHandler(async(req,res)=>{
+    const {currentPassword, newPassword} = req.body;
+    const user = req.user;
+    
+    if(!(currentPassword && newPassword)) throw new ApiError(400, "Please provide with Current/newPassword");
 
-export {registerUser, loginUser, logoutUser, refreshAccessToken}
+    const passwordValidation = await user.isPasswordCorrect(currentPassword);
+    if(!passwordValidation) throw new ApiError(400, "Invalid current password");
+
+    if(currentPassword === newPassword) throw new ApiError(400, "please use new password");
+
+    user.password = newPassword;
+    user.save();
+    // const updated = await User.findByIdAndUpdate(user._id, newPassword);
+    // console.log(updated)
+    res.json(new ApiResponse(200, {},"Password Updated"));
+    
+})
+
+
+export {registerUser, loginUser, logoutUser, refreshAccessToken, resetCurrentPassword}
 
 
 
@@ -191,3 +210,12 @@ export {registerUser, loginUser, logoutUser, refreshAccessToken}
 4. generate new access token 
 5. send response to user
 */
+
+//Change Current password
+/* 
+1. User need to be authorized before accessing this route
+2. next user needs to provide the current password and new password
+3. we need to check the current password is same as what is stored in db
+4. also the current and new password should not be same 
+5. after all verification we can save the new password in db and logout user and ask him to login with new password
+*/ 
