@@ -179,14 +179,28 @@ const getCurrentUser = asyncHandler(async(req,res)=>{
     res.json(new ApiResponse(200, {userDetails}, "User details fetch successfull"))
 })
 
+const updateUserDetails = asyncHandler(async(req,res)=>{
+  const {fullName, email} = req.body;
 
+  if(!(fullName || email)) throw new ApiError(400, "Please provide fullName/email to be updated");
+
+  const user = await User.findById(req.user?._id);
+
+  if(fullName) user.fullName = fullName;
+  if(email) user.email = email;
+  user.save();
+
+  res.json(new ApiResponse(200, {}, "fullName/email updated"))
+
+})
 
 export {registerUser, 
     loginUser, 
     logoutUser, 
     refreshAccessToken, 
     resetCurrentPassword,
-    getCurrentUser
+    getCurrentUser,
+    updateUserDetails
 }
 
 
