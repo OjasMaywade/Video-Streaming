@@ -194,13 +194,23 @@ const updateUserDetails = asyncHandler(async(req,res)=>{
 
 })
 
+const updateCoverImage = asyncHandler(async(req,res)=>{
+ const coverFilePath = req.files.coverImage?.[0].path;
+ const cloudUpload = await uploadOnCloudinary(coverFilePath);
+ 
+ const user = await User.findByIdAndUpdate(req.user._id, {coverImage: cloudUpload.url}, {new: true}).select("-password -refreshToken");
+ console.log(user)
+ res.json(new ApiResponse(200, {user}, "Cover Image Uploaded Successfully"))
+})
+
 export {registerUser, 
     loginUser, 
     logoutUser, 
     refreshAccessToken, 
     resetCurrentPassword,
     getCurrentUser,
-    updateUserDetails
+    updateUserDetails,
+    updateCoverImage
 }
 
 
