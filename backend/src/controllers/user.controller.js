@@ -194,6 +194,13 @@ const updateUserDetails = asyncHandler(async(req,res)=>{
 
 })
 
+const updateAvatarImage = asyncHandler(async(req,res)=>{
+    const avatarFilePath = req.files.avatarImage?.[0].path;
+    const uploadIn = await uploadOnCloudinary(avatarFilePath);
+    const user = await User.findByIdAndUpdate(req.user._id, {avatar: uploadIn.url}, {new: true}).select("-password -refreshToken");
+    res.json(new ApiResponse(200, user, "Avatar Image successfully Uploaded"));
+})
+
 const updateCoverImage = asyncHandler(async(req,res)=>{
  const coverFilePath = req.files.coverImage?.[0].path;
  const cloudUpload = await uploadOnCloudinary(coverFilePath);
@@ -210,7 +217,8 @@ export {registerUser,
     resetCurrentPassword,
     getCurrentUser,
     updateUserDetails,
-    updateCoverImage
+    updateCoverImage,
+    updateAvatarImage
 }
 
 
