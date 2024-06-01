@@ -2,9 +2,10 @@ import { asyncHandler } from "../utils/asycnHandler.js";
 import {upload} from "../middlewares/multer.middleware.js";
 import {ApiError} from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/apiResponse.js";
-import {uploadOnCloudinary} from "../utils/cloudinary.js";
+import {uploadOnCloudinary, deleteFromCloudinary} from "../utils/cloudinary.js";
 import {User} from "../models/user.models.js";
 import jwt from "jsonwebtoken";
+import {v2 as cloudinary}from "cloudinary";
 
 
 const generateAccessTokenAndRefreshToken = async(userinfo)=>{
@@ -202,12 +203,17 @@ const updateAvatarImage = asyncHandler(async(req,res)=>{
 })
 
 const updateCoverImage = asyncHandler(async(req,res)=>{
- const coverFilePath = req.files.coverImage?.[0].path;
- const cloudUpload = await uploadOnCloudinary(coverFilePath);
+ try{
+    const coverFilePath = req.files.coverImage?.[0].path;
  
+ const deletePreviousImage = await deleteFromCloudinary(req.user.coverImage.split("/")[7].split(".")[0])
+ console.log(deletePreviousImage)
+ const cloudUpload = await uploadOnCloudinary(coverFilePath);
  const user = await User.findByIdAndUpdate(req.user._id, {coverImage: cloudUpload.url}, {new: true}).select("-password -refreshToken");
- console.log(user)
- res.json(new ApiResponse(200, {user}, "Cover Image Uploaded Successfully"))
+ res.json   (new ApiResponse(200, {user}, "Cover Image Uploaded Successfully"))
+ }catch(err){
+    throw new ApiError(400, err)
+ }
 })
 
 export {registerUser, 
@@ -264,3 +270,12 @@ export {registerUser,
 4. also the current and new password should not be same 
 5. after all verification we can save the new password in db and logout user and ask him to login with new password
 */ 
+
+
+//UpdateCoverImage
+/* 
+1. we have delete cloudinary previous image before updating the coverimage. the choice we have is:
+i) save the public_id in db
+ii) extract the public_id from image url
+iii)
+*/

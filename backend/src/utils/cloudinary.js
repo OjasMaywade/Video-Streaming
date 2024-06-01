@@ -1,5 +1,6 @@
 import {v2 as cloudinary}from "cloudinary";
 import fs from "fs";
+import { ApiError } from "../utils/ApiError.js";
 
           
 cloudinary.config({ 
@@ -7,6 +8,15 @@ cloudinary.config({
   api_key: process.env.API_KEY, 
   api_secret: process.env.API_SECRET 
 });
+
+const deleteFromCloudinary = async(publicId) =>{
+  if(!publicId) throw new ApiError(400, "file publicId not provided/empty");
+  const response = await cloudinary.uploader.destroy(publicId, (err, result)=>{
+    if (err) throw new ApiError(400, `FIle not deleted: ${err}`);
+    return result;
+  })
+  return response;
+}
 
 const uploadOnCloudinary = async (filePath)=>{
   try {
@@ -23,5 +33,7 @@ const uploadOnCloudinary = async (filePath)=>{
   }
 }
 
-export {uploadOnCloudinary}
+
+
+export {uploadOnCloudinary, deleteFromCloudinary}
 
