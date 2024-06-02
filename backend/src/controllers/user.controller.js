@@ -196,21 +196,26 @@ const updateUserDetails = asyncHandler(async(req,res)=>{
 })
 
 const updateAvatarImage = asyncHandler(async(req,res)=>{
+    try{
     const avatarFilePath = req.files.avatarImage?.[0].path;
+    const deleteFile = await deleteFromCloudinary(req.user.avatar.split("/")[7].split(".")[0]);
+    console.log(deleteFile)
     const uploadIn = await uploadOnCloudinary(avatarFilePath);
     const user = await User.findByIdAndUpdate(req.user._id, {avatar: uploadIn.url}, {new: true}).select("-password -refreshToken");
     res.json(new ApiResponse(200, user, "Avatar Image successfully Uploaded"));
+    }catch(err){
+        throw new ApiError(400, err)
+    }
 })
 
 const updateCoverImage = asyncHandler(async(req,res)=>{
  try{
-    const coverFilePath = req.files.coverImage?.[0].path;
- 
+ const coverFilePath = req.files.coverImage?.[0].path;
  const deletePreviousImage = await deleteFromCloudinary(req.user.coverImage.split("/")[7].split(".")[0])
- console.log(deletePreviousImage)
+ if(deletePreviousImage.result !== "ok") throw new ApiError(400, "FIles not deleted")
  const cloudUpload = await uploadOnCloudinary(coverFilePath);
  const user = await User.findByIdAndUpdate(req.user._id, {coverImage: cloudUpload.url}, {new: true}).select("-password -refreshToken");
- res.json   (new ApiResponse(200, {user}, "Cover Image Uploaded Successfully"))
+ res.json   (new ApiResponse(200, user, "Cover Image Uploaded Successfully"))
  }catch(err){
     throw new ApiError(400, err)
  }
