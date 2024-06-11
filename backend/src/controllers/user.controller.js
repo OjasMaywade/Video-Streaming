@@ -5,7 +5,6 @@ import { ApiResponse } from "../utils/apiResponse.js";
 import {uploadOnCloudinary, deleteFromCloudinary} from "../utils/cloudinary.js";
 import {User} from "../models/user.models.js";
 import jwt from "jsonwebtoken";
-import {v2 as cloudinary}from "cloudinary";
 
 
 const generateAccessTokenAndRefreshToken = async(userinfo)=>{
